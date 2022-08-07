@@ -1,0 +1,3 @@
+inbound.url: http://localhost:8080?httpMethodRestrict=POST
+broker: localhost:9092
+consumer.topic: consumer-topic
