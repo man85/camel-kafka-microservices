@@ -1,0 +1,4 @@
+application.id: processor
+boot.strap.server: kafka:9092
+input.topic: consumer-topic
+output.topic: upper-case-text
