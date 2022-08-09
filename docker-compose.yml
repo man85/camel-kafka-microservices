@@ -54,46 +54,63 @@ services:
 
       echo -e 'Successfully created the following topics:'
       kafka-topics --bootstrap-server kafka:9092 --list
-
-      sleep 10m
+       sleep 20m
       "
 
 #      read -p 'Press any key to resume ...'
 #
 #
 #      echo -e 'Creating connector for logging a topic to a file'
-#      connect-standalone.sh /logger-connector/logger-connect-standalone.properties /logger-connector/logger-connect-file-sink.properties
+#      connect-standalone /logger-connector/logger-connect-standalone.properties /logger-connector/logger-connect-file-sink.properties
 #      "
-connect:
-  hostname: connect
-  image: jcustenborder/kafka-connect-all
-  depends_on:
-    - schema-registry
-    - kafka
-  ports:
-    - '8083:8083'
-  environment:
-    CONNECT_BOOTSTRAP_SERVERS: "kafka:9092"
-#    CONNECT_REST_ADVERTISED_HOST_NAME: target-connect
-#    CONNECT_PRODUCER_COMPRESSION_TYPE: lz4
-    CONNECT_GROUP_ID: connect
-    CONNECT_KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
-#    CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
-    CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
-#    CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
-    CONNECT_CONFIG_STORAGE_TOPIC: connect_config
-    CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
-    CONNECT_OFFSET_STORAGE_TOPIC: connect_offset
-    CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
-    CONNECT_STATUS_STORAGE_TOPIC: connect_status
-    CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
-    CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-    CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-    CONNECT_INTERNAL_KEY_CONVERTER_SCHEMAS_ENABLE: 'false'
-    CONNECT_INTERNAL_VALUE_CONVERTER_SCHEMAS_ENABLE: 'false'
-    CONNECT_LOG4J_LOGGERS: 'org.reflections=ERROR'
-  volumes:
-    - './books.xsd:/books.xsd:ro'
+#connect:
+#  hostname: connect
+#  image: jcustenborder/kafka-connect-all
+#  depends_on:
+#    - schema-registry
+#    - kafka
+#  ports:
+#    - '8083:8083'
+#  environment:
+#    CONNECT_BOOTSTRAP_SERVERS: "kafka:9092"
+##    CONNECT_REST_ADVERTISED_HOST_NAME: target-connect
+##    CONNECT_PRODUCER_COMPRESSION_TYPE: lz4
+#    CONNECT_GROUP_ID: connect
+#    CONNECT_KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+##    CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+#    CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+##    CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+#    CONNECT_CONFIG_STORAGE_TOPIC: connect_config
+#    CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+#    CONNECT_OFFSET_STORAGE_TOPIC: connect_offset
+#    CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+#    CONNECT_STATUS_STORAGE_TOPIC: connect_status
+#    CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+#    CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+#    CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+#    CONNECT_INTERNAL_KEY_CONVERTER_SCHEMAS_ENABLE: 'false'
+#    CONNECT_INTERNAL_VALUE_CONVERTER_SCHEMAS_ENABLE: 'false'
+#    CONNECT_LOG4J_LOGGERS: 'org.reflections=ERROR'
+#  volumes:
+#    - './books.xsd:/books.xsd:ro'
+
+  logger-connector:
+    build: ./logger-connector/
+#    build:
+#      context: ./logger-connector/
+#      dockerfile: Dockerfile
+    container_name: logger-connector
+    networks:
+      - kafka_network
+    depends_on:
+      - kafka
+      - init-kafka
+    ports:
+      - 8083:8083
+    volumes:
+      - ./tmp:/tmp
+    links:
+      - kafka
 
 
   http-receiver:
@@ -115,9 +132,9 @@ connect:
     container_name: processor
     networks:
       - kafka_network
-    links:
-      - kafka
     depends_on:
+      - kafka
+    links:
       - kafka
 
 networks:
