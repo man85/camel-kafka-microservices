@@ -10,9 +10,6 @@ services:
       - 2181:2181
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
-#      ZOOKEEPER_TICK_TIME: 2000
-      #    environment:
-  #      ZOOKEEPER_CLIENT_PORT: 2181
 
   kafka:
     image: confluentinc/cp-kafka:7.0.5
@@ -30,25 +27,14 @@ services:
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
-#    ports:
-#      #      - '9092:9092'
-#      - 29092:29092
-#    environment:
-#      KAFKA_BROKER_ID: 1
-#      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-#      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-#      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-#      #      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-#      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
-#      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-#  #      KAFKA_MIN_INSYNC_REPLICAS: 1
-
   init-kafka:
     image: confluentinc/cp-kafka:7.0.5
     depends_on:
       - kafka
     networks:
       - kafka_network
+    volumes:
+      - ./logger-connector:/logger-connector
     entrypoint: [ '/bin/sh', '-c' ]
     command: |
       "
@@ -68,7 +54,47 @@ services:
 
       echo -e 'Successfully created the following topics:'
       kafka-topics --bootstrap-server kafka:9092 --list
+
+      sleep 10m
       "
+
+#      read -p 'Press any key to resume ...'
+#
+#
+#      echo -e 'Creating connector for logging a topic to a file'
+#      connect-standalone.sh /logger-connector/logger-connect-standalone.properties /logger-connector/logger-connect-file-sink.properties
+#      "
+connect:
+  hostname: connect
+  image: jcustenborder/kafka-connect-all
+  depends_on:
+    - schema-registry
+    - kafka
+  ports:
+    - '8083:8083'
+  environment:
+    CONNECT_BOOTSTRAP_SERVERS: "kafka:9092"
+#    CONNECT_REST_ADVERTISED_HOST_NAME: target-connect
+#    CONNECT_PRODUCER_COMPRESSION_TYPE: lz4
+    CONNECT_GROUP_ID: connect
+    CONNECT_KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+#    CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+    CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+#    CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+    CONNECT_CONFIG_STORAGE_TOPIC: connect_config
+    CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+    CONNECT_OFFSET_STORAGE_TOPIC: connect_offset
+    CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+    CONNECT_STATUS_STORAGE_TOPIC: connect_status
+    CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+    CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+    CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+    CONNECT_INTERNAL_KEY_CONVERTER_SCHEMAS_ENABLE: 'false'
+    CONNECT_INTERNAL_VALUE_CONVERTER_SCHEMAS_ENABLE: 'false'
+    CONNECT_LOG4J_LOGGERS: 'org.reflections=ERROR'
+  volumes:
+    - './books.xsd:/books.xsd:ro'
+
 
   http-receiver:
     build: ./http-receiver/
@@ -76,20 +102,12 @@ services:
     container_name: http-receiver
     networks:
       - kafka_network
-#    network_mode: host
     ports:
       - 8080:8080
-#      - 9092:9092
     depends_on:
       - kafka
     links:
       - kafka
-    environment:
-      KAFKA_ADDRESS: kafka
-      #      - kafka=kafka
-      #      - KAFKA_ADDRESS=9092
-    command:
-      - KAFKA_ADDRESS=kafka
 
   processor:
     build: ./processor/
@@ -99,8 +117,6 @@ services:
       - kafka_network
     links:
       - kafka
-#    ports:
-#      - 9092:9092
     depends_on:
       - kafka
 
