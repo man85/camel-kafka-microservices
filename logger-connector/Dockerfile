@@ -1,4 +1,4 @@
-FROM wurstmeister/kafka:2.12-2.3.0
+FROM wurstmeister/kafka:2.13-2.8.1
 
 COPY logger-connect-file-sink.properties /opt/kafka/config/
 
