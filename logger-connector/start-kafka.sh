@@ -17,5 +17,4 @@ kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists \
 echo -e 'Successfully created the following topics:'
 kafka-topics.sh --bootstrap-server kafka:9092 --list
 
-#exec "/opt/kafka/bin/connect-standalone.sh" "/opt/kafka/config/logger-connect-standalone.properties" "/opt/kafka/config/logger-connect-file-sink.properties"
 connect-standalone.sh /opt/kafka/config/logger-connect-standalone.properties /opt/kafka/config/logger-connect-file-sink.properties

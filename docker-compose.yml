@@ -6,8 +6,6 @@ services:
     hostname: zookeeper
     networks:
       - kafka_network
-    ports:
-      - 2181:2181
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
 
@@ -18,8 +16,6 @@ services:
     hostname: kafka
     networks:
       - kafka_network
-    ports:
-      - 9092:9092
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181

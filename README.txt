@@ -1,5 +1,5 @@
 The App receives POST requests with a text body on localhost:8080,
-transforms the text to upper case and save it into 'tmp\logged-upper-case-text-topic.txt' file.
+transforms the text to upper case and saves it into 'tmp\logged-upper-case-text-topic.txt' file.
 
 The 'http-receiver' gets a request in passes it to 'consumer-topic', then
 the 'processor' transforms text from 'consumer-topic' to upper case and saves it

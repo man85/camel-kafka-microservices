@@ -1,7 +1,7 @@
 package org.company.processor;
 
-import org.company.processor.config.Config;
 import org.apache.kafka.streams.KafkaStreams;
+import org.company.processor.config.Config;
 
 import java.util.concurrent.CountDownLatch;
 
